@@ -74,7 +74,8 @@
     async function loadCards() {
       try {
         const response = await fetch(
-          `https://api.github.com/repos/${owner}/${repository}/contents/`
+          `https://api.github.com/repos/${owner}/${repository}/contents/`,
+          { cache: "no-store" }
         );
 
         if (!response.ok) {
@@ -91,10 +92,9 @@
         const cardMap = {};
 
         pngFiles.forEach(file => {
-          const lowerName = file.name.toLowerCase();
+          const fileName = file.name.toLowerCase();
 
-          // Get the card number from the beginning of the filename
-          const numberMatch = lowerName.match(/^(\d+)/);
+          const numberMatch = fileName.match(/^(\d+)/);
 
           if (!numberMatch) return;
 
@@ -108,17 +108,18 @@
             };
           }
 
-          if (lowerName.includes("front")) {
-            cardMap[cardNumber].front = file.download_url;
+          const imageUrl =
+            `https://raw.githubusercontent.com/${owner}/${repository}/main/${encodeURIComponent(file.name)}`;
+
+          if (fileName.includes("front")) {
+            cardMap[cardNumber].front = imageUrl;
           }
 
-          if (lowerName.includes("back")) {
-            cardMap[cardNumber].back = file.download_url;
+          if (fileName.includes("back")) {
+            cardMap[cardNumber].back = imageUrl;
           }
         });
 
-        // Keep every card that has a front.
-        // Card 42 intentionally has no back.
         cards = Object.values(cardMap)
           .filter(card => card.front)
           .sort((a, b) => a.number - b.number);
@@ -126,31 +127,9 @@
         if (cards.length === 0) {
           throw new Error("No Scripture cards were found.");
         }
-showDailyCard();
-     function showDailyCard() {
-  const dayNumber = getDayNumber();
 
-  const cardIndex =
-    (dayNumber - 1) % cards.length;
+        showDailyCard();
 
-  const card = cards[cardIndex];
-
-  showingFront = true;
-
-  document.getElementById("scriptureImage").src =
-    card.front;
-
-  document.getElementById("message").textContent =
-    `Scripture Card ${card.number} of ${cards.length}`;
-
-  if (card.back) {
-    document.getElementById("hint").textContent =
-      "Tap the card to see the back.";
-  } else {
-    document.getElementById("hint").textContent =
-      "This card has no back.";
-  }
-}  
       } catch (error) {
         document.getElementById("message").textContent =
           "There was a problem loading the Scripture cards.";
@@ -191,13 +170,8 @@ showDailyCard();
       document.getElementById("message").textContent =
         `Scripture Card ${card.number} of ${cards.length}`;
 
-      if (card.back) {
-        document.getElementById("hint").textContent =
-          "Tap the card to see the back.";
-      } else {
-        document.getElementById("hint").textContent =
-          "This card has no back.";
-      }
+      document.getElementById("hint").textContent =
+        "Tap the card to see the back.";
     }
 
     document.getElementById("card").addEventListener(
@@ -216,7 +190,6 @@ showDailyCard();
         const image =
           document.getElementById("scriptureImage");
 
-        // Card 42 has no back, so don't flip it.
         if (!card.back) {
           return;
         }
