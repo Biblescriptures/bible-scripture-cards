@@ -108,8 +108,7 @@
             };
           }
 
-          const imageUrl =
-            `https://raw.githubusercontent.com/${owner}/${repository}/main/${encodeURIComponent(file.name)}`;
+        const imageUrl = file.download_url;
 
           if (fileName.includes("front")) {
             cardMap[cardNumber].front = imageUrl;
