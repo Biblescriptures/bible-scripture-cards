@@ -127,7 +127,9 @@
           throw new Error("No Scripture cards were found.");
         }
 
-        showDailyCard();
+       document.getElementById("scriptureImage").src = cards[41].front;
+document.getElementById("message").textContent = "Scripture Card 42 of 42";
+document.getElementById("hint").textContent = "This card has no back.";
 
       } catch (error) {
         document.getElementById("message").textContent =
