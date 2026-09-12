@@ -126,11 +126,31 @@
         if (cards.length === 0) {
           throw new Error("No Scripture cards were found.");
         }
+showDailyCard();
+     function showDailyCard() {
+  const dayNumber = getDayNumber();
 
-       document.getElementById("scriptureImage").src = cards[41].front;
-document.getElementById("message").textContent = "Scripture Card 42 of 42";
-document.getElementById("hint").textContent = "This card has no back.";
+  const cardIndex =
+    (dayNumber - 1) % cards.length;
 
+  const card = cards[cardIndex];
+
+  showingFront = true;
+
+  document.getElementById("scriptureImage").src =
+    card.front;
+
+  document.getElementById("message").textContent =
+    `Scripture Card ${card.number} of ${cards.length}`;
+
+  if (card.back) {
+    document.getElementById("hint").textContent =
+      "Tap the card to see the back.";
+  } else {
+    document.getElementById("hint").textContent =
+      "This card has no back.";
+  }
+}  
       } catch (error) {
         document.getElementById("message").textContent =
           "There was a problem loading the Scripture cards.";
