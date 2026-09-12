@@ -28,7 +28,6 @@
       width: min(90vw, 500px);
       margin: 0 auto;
       cursor: pointer;
-      perspective: 1000px;
     }
 
     #card img {
@@ -61,7 +60,7 @@
     <img id="scriptureImage" src="" alt="Daily Bible Scripture">
   </div>
 
-  <div class="hint">Tap the card to see the back.</div>
+  <div class="hint" id="hint">Tap the card to see the back.</div>
 
   <div id="message">Loading today's Scripture...</div>
 
@@ -94,27 +93,38 @@
         pngFiles.forEach(file => {
           const lowerName = file.name.toLowerCase();
 
-          if (lowerName.includes(" front")) {
-            const key = lowerName.replace(" front", " side");
-            cardMap[key] = cardMap[key] || {};
-            cardMap[key].front = file.download_url;
+          // Get the card number from the beginning of the filename
+          const numberMatch = lowerName.match(/^(\d+)/);
+
+          if (!numberMatch) return;
+
+          const cardNumber = Number(numberMatch[1]);
+
+          if (!cardMap[cardNumber]) {
+            cardMap[cardNumber] = {
+              number: cardNumber,
+              front: null,
+              back: null
+            };
           }
 
-          if (lowerName.includes(" back")) {
-            const key = lowerName.replace(" back", " side");
-            cardMap[key] = cardMap[key] || {};
-            cardMap[key].back = file.download_url;
+          if (lowerName.includes("front")) {
+            cardMap[cardNumber].front = file.download_url;
+          }
+
+          if (lowerName.includes("back")) {
+            cardMap[cardNumber].back = file.download_url;
           }
         });
 
-        cards = Object.values(cardMap).filter(card =>
-          card.front && card.back
-        );
-
-        cards.sort((a, b) => a.front.localeCompare(b.front));
+        // Keep every card that has a front.
+        // Card 42 intentionally has no back.
+        cards = Object.values(cardMap)
+          .filter(card => card.front)
+          .sort((a, b) => a.number - b.number);
 
         if (cards.length === 0) {
-          throw new Error("No matching Front/Back cards were found.");
+          throw new Error("No Scripture cards were found.");
         }
 
         showDailyCard();
@@ -122,6 +132,7 @@
       } catch (error) {
         document.getElementById("message").textContent =
           "There was a problem loading the Scripture cards.";
+
         console.error(error);
       }
     }
@@ -136,40 +147,67 @@
       );
 
       const difference = today - start;
-      return Math.floor(difference / (1000 * 60 * 60 * 24));
+
+      return Math.floor(
+        difference / (1000 * 60 * 60 * 24)
+      );
     }
 
     function showDailyCard() {
       const dayNumber = getDayNumber();
-      const cardIndex = (dayNumber - 1) % cards.length;
+
+      const cardIndex =
+        (dayNumber - 1) % cards.length;
 
       const card = cards[cardIndex];
 
       showingFront = true;
 
-      document.getElementById("scriptureImage").src = card.front;
+      document.getElementById("scriptureImage").src =
+        card.front;
 
       document.getElementById("message").textContent =
-        `Scripture Card ${cardIndex + 1} of ${cards.length}`;
+        `Scripture Card ${card.number} of ${cards.length}`;
+
+      if (card.back) {
+        document.getElementById("hint").textContent =
+          "Tap the card to see the back.";
+      } else {
+        document.getElementById("hint").textContent =
+          "This card has no back.";
+      }
     }
 
-    document.getElementById("card").addEventListener("click", function() {
-      if (cards.length === 0) return;
+    document.getElementById("card").addEventListener(
+      "click",
+      function() {
 
-      const dayNumber = getDayNumber();
-      const cardIndex = (dayNumber - 1) % cards.length;
-      const card = cards[cardIndex];
+        if (cards.length === 0) return;
 
-      const image = document.getElementById("scriptureImage");
+        const dayNumber = getDayNumber();
 
-      if (showingFront) {
-        image.src = card.back;
-        showingFront = false;
-      } else {
-        image.src = card.front;
-        showingFront = true;
+        const cardIndex =
+          (dayNumber - 1) % cards.length;
+
+        const card = cards[cardIndex];
+
+        const image =
+          document.getElementById("scriptureImage");
+
+        // Card 42 has no back, so don't flip it.
+        if (!card.back) {
+          return;
+        }
+
+        if (showingFront) {
+          image.src = card.back;
+          showingFront = false;
+        } else {
+          image.src = card.front;
+          showingFront = true;
+        }
       }
-    });
+    );
 
     loadCards();
   </script>
